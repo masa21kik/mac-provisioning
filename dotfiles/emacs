@@ -1,0 +1,44 @@
+;; -*- coding: utf-8 -*-
+
+;;;=====================================
+;; common
+;;;=====================================
+;; 行，列番号を表示
+(line-number-mode t)
+(column-number-mode t)
+
+;; file の最後は 必ず newline で終わる様にする。
+(setq require-final-newline t)
+
+;; バックアップファイルを作らない
+(setq backup-inhibited t)
+;; 終了時にオートセーブファイルを消す
+(setq delete-auto-save-files t)
+
+;;;=====================================
+;; color
+;;;=====================================
+;; 白地に黒字は 目が疲れるので、黒地に白字。
+(set-foreground-color "white")
+(set-background-color "black")
+(set-cursor-color     "white")
+;; 領域指定の色指定
+(set-face-background 'region "dark slate gray")
+(set-face-foreground 'region "moccasin")
+(transient-mark-mode t)
+(show-paren-mode 1)
+
+;;;=====================================
+;; keybind
+;;;=====================================
+(global-set-key (kbd "M-g") 'goto-line)                    ;カーソルの移動
+(global-set-key (kbd "M-l") 'what-line)                    ;カーソルの位置
+(global-set-key (kbd "C-x c") 'comment-region)             ;コメントアウト
+(global-set-key (kbd "C-x v") 'uncomment-region)           ;コメントイン
+(global-set-key (kbd "C-o") 'scroll-down)                  ;スクロールダウン
+(global-set-key (kbd "C-h") 'backward-delete-char)         ;C-h を BS にする
+(global-set-key (kbd "C-m") 'newline-and-indent)           ;改行キー(C-m)でオートインデント
+(global-set-key (kbd "<end>") 'end-of-buffer)
+(global-set-key (kbd "<home>") 'beginning-of-buffer)
+
+(put 'upcase-region 'disabled nil)

@@ -1,0 +1,154 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  sudo: no
+  vars:
+    homebrew_taps:
+      - homebrew/binary
+      - homebrew/dupes
+      - caskroom/cask
+    homebrew_packages:
+      - { name: readline }
+      - { name: openssl }
+      - { name: openssl, state: linked, install_options: force }
+      - { name: python }
+      - { name: ansible }
+      - { name: coreutils }
+      - { name: git }
+      - { name: zsh, install_options: disable-etcdir }
+      - { name: wget }
+      - { name: curl }
+      - { name: cmake }
+      - { name: autoconf }
+      - { name: automake }
+      - { name: pkg-config }
+      - { name: ctags }
+      - { name: tree }
+      - { name: lv }
+      - { name: nkf }
+      - { name: jq }
+      - { name: go }
+      - { name: direnv }
+      - { name: peco }
+      - { name: hub }
+      - { name: tig }
+      - { name: pyenv }
+      - { name: rbenv }
+      - { name: ruby-build }
+      - { name: tofrodos }
+      - { name: lha }
+      - { name: postgresql }
+      - { name: sqlite }
+      - { name: redis }
+      - { name: imagemagick }
+      - { name: packer }
+      - { name: xz }
+      - { name: rlwrap }
+      - { name: w3m }
+      - { name: tmux }
+      # - { name: phantomjs }
+      - { name: graphviz }
+      - { name: autojump }
+      - { name: gibo }
+      - { name: source-highlight }
+      - { name: libxml2 }
+      - { name: libxslt }
+      - { name: libiconv }
+      - { name: docker }
+      - { name: awscli }
+    homebrew_cask_packages:
+      - { name: iterm2 }
+      - { name: google-chrome }
+      - { name: java }
+      - { name: slack }
+      - { name: gitx }
+      - { name: karabiner }
+      - { name: dash }
+      - { name: skitch }
+      - { name: atom }
+      - { name: kobito }
+      - { name: vagrant }
+      - { name: virtualbox }
+      - { name: docker-machine }
+      - { name: docker-compose }
+    go_packages:
+      - { name: github.com/motemen/ghq }
+      - { name: github.com/sonots/lltsv }
+
+  tasks:
+    - name: add homebrew tap repository
+      homebrew_tap: tap={{ item }} state=present
+      with_items: homebrew_taps
+
+    - name: update homebrew
+      homebrew: update_homebrew=yes
+
+    # brew
+    - name: install brew packages
+      homebrew: >
+        name={{ item.name }}
+        state={{ item.state | default('latest') }}
+        install_options={{
+          item.install_options | default() | join(',')
+          if item.install_options is not string
+          else item.install_options
+        }}
+      with_items: homebrew_packages
+      register: brew_result
+    - name: mkdir to save brew packages information
+      file: path=brew_info state=directory
+    - name: save brew packages information
+      shell: brew info {{ item }} > brew_info/{{ item }}
+      with_items: brew_result.results | selectattr('changed') | map(attribute='item') | map(attribute='name') | list
+
+    # cask
+    - name: install homebrew-cask
+      homebrew: name=brew-cask state=latest
+    - name: install cask packages
+      homebrew_cask: name={{ item.name }} state={{ item.state|default('installed') }}
+      with_items: homebrew_cask_packages
+      register: cask_result
+    - name: mkdir to save cask packages information
+      file: path=cask_info state=directory
+    - name: save cask packages information
+      shell: brew cask info {{ item }} > cask_info/{{ item }}
+      with_items: cask_result.results | selectattr('changed') | map(attribute='item') | map(attribute='name') | list
+
+    # oh-my-zsh
+    - name: install oh-my-zsh
+      shell: curl -L https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh | sh
+      args:
+        creates: ~/.oh-my-zsh/
+
+    # dotfiles
+    - name: make symlink of dotfiles
+      file: src={{ item }} dest=~/.{{ item | basename }} state=link force=yes
+      with_fileglob:
+        - dotfiles/*
+
+    # go
+    - name: check go modules status
+      command: go list {{ item.name }}
+      register: go_module
+      failed_when: go_module.rc not in [0, 1]
+      changed_when: go_module.rc not in [0, 1]
+      with_items: go_packages
+
+    - name: install go modules
+      command: go get {{ item.item }}
+      when: item.rc == 1
+      with_items: go_module.results
+
+    # karabiner
+    - name: copy private.xml
+      copy: src=configs/karabiner/private.xml dest="~/Library/Application Support/Karabiner/private.xml"
+      notify: reload karabiner xml
+    - name: copy import.sh
+      copy: src=configs/karabiner/import.sh dest="~/Library/Application Support/Karabiner/import.sh" mode=755
+      notify: import karabiner setting
+
+  handlers:
+    - name: reload karabiner xml
+      shell: /Applications/Karabiner.app/Contents/Library/bin/karabiner reloadxml
+    - name: import karabiner setting
+      shell: "~/Library/Application\ Support/Karabiner/import.sh"
