@@ -56,6 +56,8 @@
       - { name: libiconv }
       - { name: docker }
       - { name: awscli }
+      - { name: emacs }
+      - { name: cask }
     homebrew_cask_packages:
       - { name: iterm2 }
       - { name: google-chrome }
@@ -126,6 +128,11 @@
       with_fileglob:
         - dotfiles/*
 
+    # emacs cask
+    - name: copy emacs cask file
+      copy: src=configs/emacs/Cask dest="~/.emacs.d/Cask"
+      notify: install emacs cask
+
     # go
     - name: check go modules status
       command: go list {{ item.name }}
@@ -152,3 +159,5 @@
       shell: /Applications/Karabiner.app/Contents/Library/bin/karabiner reloadxml
     - name: import karabiner setting
       shell: "~/Library/Application\ Support/Karabiner/import.sh"
+    - name: install emacs cask
+      shell: "cd ~/.emacs.d && cask install"

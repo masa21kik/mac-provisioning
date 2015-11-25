@@ -1,8 +1,14 @@
 ;; -*- coding: utf-8 -*-
 
+(require 'cask)
+(cask-initialize)
+
 ;;;=====================================
 ;; common
 ;;;=====================================
+;; 起動時の画面はいらない
+(setq inhibit-startup-message t)
+
 ;; 行，列番号を表示
 (line-number-mode t)
 (column-number-mode t)
@@ -41,4 +47,14 @@
 (global-set-key (kbd "<end>") 'end-of-buffer)
 (global-set-key (kbd "<home>") 'beginning-of-buffer)
 
-(put 'upcase-region 'disabled nil)
+;;;=====================================
+;; others
+;;;=====================================
+;; git-gutter
+(global-git-gutter-mode t)
+
+;; frycheck
+(add-hook 'ruby-mode-hook
+          '(lambda ()
+	    (setq flycheck-checker 'ruby-ruboco)
+	    (flycheck-mode 1)))
