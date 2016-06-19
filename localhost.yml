@@ -1,11 +1,12 @@
 - hosts: localhost
   connection: local
   gather_facts: no
-  sudo: no
+  become: no
   vars:
     homebrew_taps:
       - homebrew/binary
       - homebrew/dupes
+      - homebrew/science
       - caskroom/cask
     homebrew_packages:
       - { name: readline }
@@ -58,6 +59,10 @@
       - { name: awscli }
       - { name: emacs }
       - { name: cask }
+      - { name: docker-machine }
+      - { name: pyenv }
+      # - { name: R }
+      - { name: textql }
     homebrew_cask_packages:
       - { name: iterm2 }
       - { name: google-chrome }
@@ -68,19 +73,20 @@
       - { name: dash }
       - { name: skitch }
       - { name: atom }
-      - { name: kobito }
       - { name: vagrant }
       - { name: virtualbox }
-      - { name: docker-machine }
       - { name: docker-compose }
+      - { name: rstudio }
     go_packages:
       - { name: github.com/motemen/ghq }
       - { name: github.com/sonots/lltsv }
+    git_packages:
+      - { repo: "https://github.com/tmux-plugins/tpm", dest: "~/.tmux/plugins/tpm" }
 
   tasks:
     - name: add homebrew tap repository
       homebrew_tap: tap={{ item }} state=present
-      with_items: homebrew_taps
+      with_items: '{{homebrew_taps}}'
 
     - name: update homebrew
       homebrew: update_homebrew=yes
@@ -95,26 +101,26 @@
           if item.install_options is not string
           else item.install_options
         }}
-      with_items: homebrew_packages
+      with_items: '{{homebrew_packages}}'
       register: brew_result
     - name: mkdir to save brew packages information
       file: path=brew_info state=directory
     - name: save brew packages information
       shell: brew info {{ item }} > brew_info/{{ item }}
-      with_items: brew_result.results | selectattr('changed') | map(attribute='item') | map(attribute='name') | list
+      with_items: "{{brew_result.results | selectattr('changed') | map(attribute='item') | map(attribute='name') | list}}"
 
     # cask
     - name: install homebrew-cask
       homebrew: name=brew-cask state=latest
     - name: install cask packages
       homebrew_cask: name={{ item.name }} state={{ item.state|default('installed') }}
-      with_items: homebrew_cask_packages
+      with_items: '{{homebrew_cask_packages}}'
       register: cask_result
     - name: mkdir to save cask packages information
       file: path=cask_info state=directory
     - name: save cask packages information
       shell: brew cask info {{ item }} > cask_info/{{ item }}
-      with_items: cask_result.results | selectattr('changed') | map(attribute='item') | map(attribute='name') | list
+      with_items: "{{cask_result.results | selectattr('changed') | map(attribute='item') | map(attribute='name') | list}}"
 
     # oh-my-zsh
     - name: install oh-my-zsh
@@ -139,12 +145,12 @@
       register: go_module
       failed_when: go_module.rc not in [0, 1]
       changed_when: go_module.rc not in [0, 1]
-      with_items: go_packages
+      with_items: '{{go_packages}}'
 
     - name: install go modules
       command: go get {{ item.item }}
       when: item.rc == 1
-      with_items: go_module.results
+      with_items: '{{go_module.results}}'
 
     # karabiner
     - name: copy private.xml
@@ -153,6 +159,11 @@
     - name: copy import.sh
       copy: src=configs/karabiner/import.sh dest="~/Library/Application Support/Karabiner/import.sh" mode=755
       notify: import karabiner setting
+
+    # git clone
+    - name: clone git repositories
+      git: repo={{ item.repo }} dest={{ item.dest }}
+      with_items: '{{git_packages}}'
 
   handlers:
     - name: reload karabiner xml

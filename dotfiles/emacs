@@ -56,5 +56,7 @@
 ;; frycheck
 (add-hook 'ruby-mode-hook
           '(lambda ()
-	    (setq flycheck-checker 'ruby-ruboco)
+	    (setq flycheck-checker 'ruby-rubocop)
 	    (flycheck-mode 1)))
+(put 'upcase-region 'disabled nil)
+(put 'downcase-region 'disabled nil)

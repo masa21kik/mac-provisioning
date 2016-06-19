@@ -1,6 +1,4 @@
 ### zsh
-[[ -s "$HOME/.zsh_local" ]] && source "$HOME/.zsh_local"
-
 export ZSH=$HOME/.oh-my-zsh
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
@@ -29,7 +27,9 @@ bindkey '^S' history-incremental-pattern-search-forward
 eval "$(rbenv init -)"
 
 ## Docker
-eval "$(docker-machine env dev)"
+if docker-machine status dev | grep Running > /dev/null; then
+    eval "$(docker-machine env dev)"
+fi
 
 ### Go
 export GOPATH=$HOME
@@ -47,3 +47,4 @@ function peco-src () {
 zle -N peco-src
 bindkey '^]' peco-src
 
+[[ -s "$HOME/.zsh_local" ]] && source "$HOME/.zsh_local"
