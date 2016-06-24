@@ -60,6 +60,7 @@
       - { name: emacs }
       - { name: cask }
       - { name: docker-machine }
+      - { name: docker-compose }
       - { name: pyenv }
       # - { name: R }
       - { name: textql }
@@ -75,7 +76,6 @@
       - { name: atom }
       - { name: vagrant }
       - { name: virtualbox }
-      - { name: docker-compose }
       - { name: rstudio }
     go_packages:
       - { name: github.com/motemen/ghq }
