@@ -82,6 +82,8 @@
       - { name: github.com/sonots/lltsv }
     git_packages:
       - { repo: "https://github.com/tmux-plugins/tpm", dest: "~/.tmux/plugins/tpm" }
+    symlink_bins:
+      - { path: "/usr/local/share/git-core/contrib/diff-highlight/diff-highlight" }
 
   tasks:
     - name: add homebrew tap repository
@@ -164,6 +166,11 @@
     - name: clone git repositories
       git: repo={{ item.repo }} dest={{ item.dest }}
       with_items: '{{git_packages}}'
+
+    # symlink /usr/local/bin
+    - name: symlink bin
+      shell: ln -s {{ item.path }} /usr/local/bin
+      with_items: '{{symlink_bins}}'
 
   handlers:
     - name: reload karabiner xml
